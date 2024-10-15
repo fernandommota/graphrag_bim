@@ -6,4 +6,10 @@ services:
       - /home/fernando/dev:/home/ubuntu/dev
     tty: true
     stdin_open: true  
-    gpus: all
+    deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: all # alternatively, use `count: all` for all GPUs
+                capabilities: [gpu]
