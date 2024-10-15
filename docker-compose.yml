@@ -14,17 +14,15 @@ services:
     volumes:
       - ./data:/data
   ollama:
-    image: ollama
+    image: ollama/ollama:latest
     ports:
-      - 11434:11434 # Ollama API
+      - 11435:11434 # Ollama API
   instance:
     image: graphrag_bim
     volumes: 
       - ./../dev:/home/ubuntu/dev
     tty: true
     stdin_open: true  
-    ports:
-      - 7687:7687 # Neo4j API
     deploy:
         resources:
           reservations:
