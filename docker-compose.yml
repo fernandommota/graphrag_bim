@@ -1,0 +1,9 @@
+version: '3'
+services:
+  instance:
+    image: graphrag_bim
+    volumes: 
+      - /home/fernando/dev:/home/ubuntu/dev
+    tty: true
+    stdin_open: true  
+    gpus: all
