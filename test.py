@@ -39,12 +39,6 @@ def save_graph(entities):
 graph = create_or_connecto_to_graph("ifc_haus")
 
 graph_ifc_documents = convert_ifc_to_graph_document('input/ifc/AC20-FZK-Haus.ifc')
-
-#for index, graph_document in enumerate(graph_ifc_documents):
-#    pass
-    #print('index',index)
-    #print('graph_document', graph_document)
-
 save_graph(graph_ifc_documents)
 
 def run_query(human_query):
@@ -65,16 +59,23 @@ def run_query(human_query):
         #'''
         #tx.run(query)
 
-        query = '''
-        CREATE FULLTEXT INDEX `fulltext_entity_ifc_door` 
-        FOR (n:IfcDoor) 
-        ON EACH [n.type];
-        '''
-        tx.run(query)
+        #query = '''
+        #CREATE FULLTEXT INDEX `fulltext_entity_ifc_door` 
+        #FOR (n:IfcDoor) 
+        #ON EACH [n.type];
+        #'''
+        #tx.run(query)
+#
+        #query = '''
+        #CREATE FULLTEXT INDEX `fulltext_entity_ifc_window` 
+        #FOR (n:IfcWindow) 
+        #ON EACH [n.type];
+        #'''
+        #tx.run(query)
 
         query = '''
-        CREATE FULLTEXT INDEX `fulltext_entity_ifc_window` 
-        FOR (n:IfcWindow) 
+        CREATE FULLTEXT INDEX `fulltext_entity` 
+        FOR (n:__Entity__) 
         ON EACH [n.type];
         '''
         tx.run(query)
@@ -100,7 +101,7 @@ def run_query(human_query):
 
         names: list[str] = Field(
             ...,
-            description="All the person, organization, or business entities that "
+            description="All the properties entities that "
             "appear in the text",
         )
 
@@ -133,18 +134,18 @@ def run_query(human_query):
         result = ""
         entities = entity_chain.invoke(question)
         for entity in entities.names:
-            #print('entity', entity)
+            print('entity', entity)
             response = graph.query(
-                """CALL db.index.fulltext.queryNodes('fulltext_entity_ifc_door', $query, {limit:200})
+                """CALL db.index.fulltext.queryNodes('fulltext_entity', $query, {limit:200})
                 YIELD node,score
                 CALL {
                 WITH node
                 MATCH (node)-[r:IFC]->(neighbor)
-                RETURN node.id + ' - ' + type(r) + ' -> ' + neighbor.id AS output
+                RETURN node.id + ' type ' + node.type + ' name ' + node.name + ' Height ' + node.BaseQuantities_Height + ' Length ' + node.BaseQuantities_Length + ' - ' + type(r) + ' -> ' + neighbor.id AS output
                 UNION ALL
                 WITH node
                 MATCH (node)<-[r:IFC]-(neighbor)
-                RETURN neighbor.id + ' - ' + type(r) + ' -> ' +  node.id AS output
+                RETURN neighbor.id + ' type ' + node.type + ' name ' + node.name + ' Height ' + node.BaseQuantities_Height + ' Length ' + node.BaseQuantities_Length + ' - ' + type(r) + ' -> ' +  node.id AS output
                 }
                 RETURN output LIMIT 50
                 """,
@@ -152,23 +153,6 @@ def run_query(human_query):
             )
             result += "\n".join([el['output'] for el in response])
 
-            response = graph.query(
-                """CALL db.index.fulltext.queryNodes('fulltext_entity_ifc_window', $query, {limit:200})
-                YIELD node,score
-                CALL {
-                WITH node
-                MATCH (node)-[r:IFC]->(neighbor)
-                RETURN node.id + ' type ' + node.type + ' name ' + node.name + ' - ' + type(r) + ' -> ' + neighbor.id AS output
-                UNION ALL
-                WITH node
-                MATCH (node)<-[r:IFC]-(neighbor)
-                RETURN neighbor.id + ' type ' + node.type + ' name ' + node.name + ' - ' + type(r) + ' -> ' +  node.id AS output
-                }
-                RETURN output LIMIT 50
-                """,
-                {"query": entity},
-            )
-            result += "\n".join([el['output'] for el in response])
         return result
 
     #print('Prompt graph_retriever',graph_retriever(human_query))
@@ -202,17 +186,28 @@ def run_query(human_query):
 
     print(f'Response: {response}')
 
-# Count the number of X IFC Element
-# 11 window
-# 5 doors
+def run_queries():
+    # Count the number of X IFC Element
+    
+    # 5 doors
+    run_query("What is the number of IfcDoor?")
+    run_query("What is the names of IfcDoor entities and count?")
 
-run_query("What is the number of IfcDoor?")
-run_query("What is the names of IfcDoor entities and count?")
+    # 11 window
+    run_query("What is the number of IfcWindow?")
+    run_query("What is the names of IfcWindow entities and count?")
 
-#run_query("Count the number of unique IfcDoor?")
-#run_query("Count the number of unique IfcWindow?")
-#run_query("Count the unique number of IIfcWindow appears?")
-run_query("What is the number of IfcWindow?")
-run_query("What is the names of IfcWindow entities and count?")
+    # Sum the area
+    run_query("Show the Multiply the height by Length by each IfcWallStandardCase entities and sum all.")
+    #, then show the height and Length for each one
 
-# Sum the number of wall
+#run_queries()
+
+def run_queries_pt_br():
+    # Count the number of X IFC Element
+    
+    # 5 doors
+    run_query("Qual o número de IfcDoor?")
+    run_query("Quais os nomes de IfcDoor e conte?")
+
+run_queries_pt_br()

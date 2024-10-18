@@ -16,22 +16,33 @@ def convert_ifc_to_graph_document(ifc_file_path) -> List[GraphDocument]:
             continue
 
         type = ifcopenshell.util.element.get_type(ifc_object)
+        psets = {}
+        qsets = {}
         if type is not None:
-            psets = ifcopenshell.util.element.get_psets(type)
+            psets = ifcopenshell.util.element.get_psets(ifc_object, psets_only=True)
+            qsets = ifcopenshell.util.element.get_psets(ifc_object, qtos_only=True)
 
         ifc_objects[ifc_object.id()] = {
             "id": f'#{str(ifc_object.id())}',
             "type":ifc_object.is_a()
         }
 
+        properties={
+            "type":ifc_objects[ifc_object.id()]["type"],
+            "name": ifc_object.Name,
+            "BaseQuantities_Height": '',
+            "BaseQuantities_Length": ''
+        }
+
+        if qsets.get("BaseQuantities") is not None:
+            for item in qsets["BaseQuantities"]:
+                properties[f'BaseQuantities_{item}'] = qsets["BaseQuantities"][item]
+
         nodes.append(
                 Node(
                     id=ifc_objects[ifc_object.id()]["id"],
                     type=ifc_objects[ifc_object.id()]["type"],
-                    properties={
-                        "type":ifc_objects[ifc_object.id()]["type"],
-                        "name": ifc_object.Name
-                    },
+                    properties=properties
                 )
             )
         
